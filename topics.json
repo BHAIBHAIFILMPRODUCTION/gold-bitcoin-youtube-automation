@@ -1,0 +1,72 @@
+[
+  {
+    "title": "Gold vs Bitcoin: What Are You Really Buying?",
+    "slug": "gold-vs-bitcoin",
+    "scenes": [
+      ["A simple question", "Gold and Bitcoin are often discussed as stores of value, but they are very different assets. Gold is a physical metal with thousands of years of history. Bitcoin is a digital asset built around a public network and a limited issuance schedule."],
+      ["Where gold gets its value", "Gold has industrial uses, jewellery demand, cultural importance, and a long history as a reserve asset. It can be held physically, but storage, purity checks, insurance, and buying or selling spreads can affect the real return."],
+      ["Where Bitcoin gets its value", "Bitcoin's supporters point to its limited supply, portability, divisibility, and ability to transfer value over the internet. Its price, however, can change sharply, and access depends on secure keys, exchanges, and reliable technology."],
+      ["Supply is not the whole story", "A limited supply does not guarantee a rising price. Price also depends on demand, liquidity, regulation, market confidence, and the willingness of buyers to pay. Both assets can fall in value for long periods."],
+      ["Risks are different", "Gold faces storage, authenticity, and transaction costs. Bitcoin faces custody mistakes, scams, exchange failures, software risks, and extreme volatility. Neither asset is risk-free, and neither is guaranteed to protect purchasing power over every time period."],
+      ["How to compare them", "Compare your time horizon, need for liquidity, ability to tolerate losses, and total costs. Think about how each asset fits alongside emergency savings and diversified investments rather than treating either one as a complete financial plan."],
+      ["A practical checklist", "Before buying anything, understand the product, verify the seller or platform, check fees and taxes, and decide in advance what loss you could tolerate. Avoid borrowing to invest and be suspicious of guaranteed-return claims."],
+      ["Final takeaway", "Gold and Bitcoin solve different problems and behave differently. This video is for education, not investment advice. Research independently and speak with a qualified financial professional if you need advice for your circumstances."]
+    ]
+  },
+  {
+    "title": "Why Bitcoin Prices Move So Fast",
+    "slug": "why-bitcoin-moves",
+    "scenes": [
+      ["Start with volatility", "Bitcoin can move much more sharply than many traditional assets. That happens because buyers and sellers constantly update their expectations, while trading takes place around the clock across many venues."],
+      ["Supply and demand", "When demand rises faster than available sell orders, prices can jump. When sellers become more urgent than buyers, prices can fall quickly. The order book and available liquidity affect how large each move becomes."],
+      ["News and expectations", "Regulation, institutional activity, security incidents, macroeconomic announcements, and product launches can change expectations. Markets may move before a headline is fully understood because traders react to what they think the news means."],
+      ["Leverage can amplify moves", "Some traders borrow exposure through derivatives. If prices move against leveraged positions, exchanges may liquidate them, adding more buying or selling to the market. This can make a move more intense, but it does not explain every price change."],
+      ["Liquidity and trading hours", "Bitcoin trades continuously, but liquidity is not identical at every hour or on every platform. In thinner markets, a relatively modest order can have a larger price impact. Prices may also differ slightly between exchanges."],
+      ["Avoid false certainty", "A chart pattern or social media prediction cannot tell you with certainty what happens next. Past performance is not a reliable promise of future returns, and a confident prediction can still be wrong."],
+      ["Risk management basics", "If you choose to participate, decide your maximum loss beforehand, avoid using money needed for essentials, and be cautious with leverage. Consider whether you understand the product well enough to explain its risks in plain language."],
+      ["Final takeaway", "Bitcoin volatility comes from changing expectations, liquidity, leverage, and market structure. Learn the mechanics before risking money. This video is educational only and is not a recommendation to buy or sell."]
+    ]
+  },
+  {
+    "title": "What Makes Gold Prices Rise or Fall?",
+    "slug": "gold-price-factors",
+    "scenes": [
+      ["Gold has many drivers", "Gold prices respond to several forces at once. There is no single indicator that reliably explains every move, and the same news can affect prices differently depending on what markets already expected."],
+      ["Interest rates and opportunity cost", "Gold does not pay interest. When yields on competing assets rise, holding gold may become less attractive to some investors. When expected real yields fall, gold can become more appealing, although the relationship is not perfect."],
+      ["The US dollar", "Gold is commonly quoted in US dollars. Changes in the dollar can affect international purchasing power and demand, but the relationship varies over time and should not be used as a standalone trading signal."],
+      ["Central banks and investment demand", "Central banks may buy or sell gold as part of reserve management. Investors also use gold funds, bars, coins, and jewellery. These sources of demand can move differently, so one headline rarely tells the whole story."],
+      ["Inflation and uncertainty", "Gold is often described as an inflation hedge or safe haven, but it does not rise automatically whenever inflation increases or uncertainty grows. Market positioning, rates, currency moves, and the type of shock all matter."],
+      ["Local prices and currency", "For buyers in India, the rupee-dollar exchange rate, import duties, taxes, local premiums, and jewellery-making charges can affect the price paid. The international spot price is not always the final retail price."],
+      ["How to follow the market", "Use multiple reliable sources, check whether a quote is spot or retail, note the currency and timestamp, and avoid reacting to one social media post. Forecasts are uncertain and can change as new information arrives."],
+      ["Final takeaway", "Gold prices reflect a combination of rates, currencies, demand, policy, and uncertainty. Treat explanations as frameworks rather than guarantees. This content is educational, not personal financial advice."]
+    ]
+  },
+  {
+    "title": "Bitcoin Wallets Explained: Keys, Custody and Common Mistakes",
+    "slug": "bitcoin-wallets",
+    "scenes": [
+      ["What a wallet really does", "A Bitcoin wallet does not store coins in the same way a physical wallet stores cash. It manages keys that let a user authorize transactions recorded on the network."],
+      ["Private keys and recovery phrases", "A private key proves control over funds. Many wallets present a recovery phrase that can restore access. Anyone who obtains that phrase may be able to take the funds, so it must be kept private and secure."],
+      ["Custodial versus self-custody", "A custodial platform controls the keys on a customer's behalf. This may feel convenient, but users depend on the provider's security and withdrawal policies. Self-custody offers more direct control but also more personal responsibility."],
+      ["Backups matter", "A backup should be made according to the wallet maker's instructions and stored away from casual access. Avoid saving recovery phrases in public cloud notes, sending them in chat, or photographing them where they may sync automatically."],
+      ["Scams and fake support", "Scammers may impersonate exchanges, wallet developers, or support staff. Legitimate support should not need your recovery phrase. Never install wallet software from suspicious links or approve transactions you do not understand."],
+      ["Test before moving funds", "When learning a new wallet, check the address carefully and consider a small test transaction before sending a larger amount. Network fees, address formats, and irreversible transactions require attention."],
+      ["Plan for loss and inheritance", "Think about what happens if a device breaks, a password is forgotten, or a trusted person needs access in an emergency. The right setup depends on your knowledge, assets, and personal circumstances."],
+      ["Final takeaway", "Wallet security is about protecting keys, backups, and transaction decisions. There is no perfect setup for everyone. Learn from official documentation and never share a recovery phrase. This video is educational only."]
+    ]
+  },
+  {
+    "title": "Spot Price vs Jewellery Price: Understanding Gold Costs",
+    "slug": "gold-spot-vs-jewellery",
+    "scenes": [
+      ["Why two gold prices differ", "The headline gold price and the amount charged at a jewellery shop are not the same thing. Retail prices can include several components beyond the international market quote."],
+      ["Purity and karat", "Gold purity describes how much of an item is gold compared with other metals. For example, 24-karat gold is close to pure gold, while common jewellery alloys use lower karat values to improve durability."],
+      ["Currency conversion", "International gold is often quoted in US dollars per troy ounce. Local pricing requires converting units and currencies, and exchange-rate changes can affect the price even when the international quote is steady."],
+      ["Taxes and import costs", "Local taxes, duties, transport, refining, and dealer costs may contribute to retail pricing. The exact rules and rates can change, so buyers should check current official information rather than rely on an old social media post."],
+      ["Making charges and stones", "Jewellery can include making charges, design premiums, gemstones, and retailer margins. These may not be recovered when selling the item later, so the resale value can differ from the original bill."],
+      ["Hallmarks and invoices", "Check purity marks, ask for a clear invoice, and understand the weight and pricing breakdown. Use reputable sellers and verify local hallmarking guidance where applicable."],
+      ["Compare like with like", "When comparing offers, check purity, net gold weight, making charges, taxes, buyback conditions, and the price timestamp. A low headline rate may not mean a lower final cost."],
+      ["Final takeaway", "Understanding the full bill helps you compare gold products fairly. Prices and tax rules vary by location and time. This video is for general education, not a recommendation to purchase."]
+    ]
+  }
+]

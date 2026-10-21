@@ -1,0 +1,155 @@
+import os, json, base64, subprocess, textwrap, random, hashlib
+from datetime import datetime, timezone
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+ROOT = Path(".")
+OUT = Path("out")
+OUT.mkdir(exist_ok=True)
+W, H = 1920, 1080
+BG = (10, 16, 32)
+GOLD = (245, 190, 65)
+WHITE = (245, 247, 250)
+MUTED = (173, 185, 204)
+
+def run(cmd):
+    subprocess.run(cmd, check=True)
+
+def font(size, bold=False):
+    candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
+    ]
+    for p in candidates:
+        if Path(p).exists():
+            return ImageFont.truetype(p, size)
+    return ImageFont.load_default()
+
+def wrap_words(draw, text, fnt, max_width):
+    lines, line = [], ""
+    for word in text.split():
+        test = (line + " " + word).strip()
+        if draw.textbbox((0, 0), test, font=fnt)[2] <= max_width:
+            line = test
+        else:
+            if line: lines.append(line)
+            line = word
+    if line: lines.append(line)
+    return lines
+
+def make_slide(title, body, idx, topic_title, path):
+    im = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(im)
+    # subtle gold frame and decorative chart-like lines
+    d.rounded_rectangle((55, 55, W-55, H-55), radius=28, outline=GOLD, width=4)
+    d.text((105, 95), "GOLD • BITCOIN • MARKET EDUCATION", font=font(30, True), fill=GOLD)
+    d.text((105, 165), f"{idx:02d}  /  08", font=font(27), fill=MUTED)
+    y = 250
+    for line in wrap_words(d, title, font(66, True), W-220):
+        d.text((105, y), line, font=font(66, True), fill=WHITE)
+        y += 82
+    y += 38
+    for line in wrap_words(d, body, font(38), W-240):
+        d.text((110, y), line, font=font(38), fill=MUTED)
+        y += 58
+    # decorative bar chart at bottom
+    base_y = H-155
+    heights = [45, 70, 55, 100, 80, 125, 95, 140, 115, 155, 130, 175]
+    for i, h in enumerate(heights):
+        x = 110 + i*34
+        d.rounded_rectangle((x, base_y-h, x+18, base_y), radius=5, fill=GOLD if i % 3 else (86, 148, 186))
+    d.text((650, H-145), topic_title[:70], font=font(25), fill=WHITE)
+    d.text((650, H-105), "Educational content • Not investment advice", font=font(22), fill=MUTED)
+    im.save(path, quality=92)
+
+def make_audio(text, wav_path):
+    # espeak-ng is installed by the GitHub workflow; use a free local synthetic voice.
+    run(["espeak-ng", "-v", "en-us", "-s", "142", "-p", "42", "-w", str(wav_path), text])
+
+def seconds(wav_path):
+    out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                   "-of", "default=noprint_wrappers=1:nokey=1", str(wav_path)], text=True)
+    return float(out.strip())
+
+def create_video(topic):
+    work = OUT / "segments"
+    work.mkdir(exist_ok=True, parents=True)
+    segment_paths = []
+    for i, (heading, paragraph) in enumerate(topic["scenes"], start=1):
+        image_path = work / f"slide_{i:02d}.jpg"
+        wav_path = work / f"voice_{i:02d}.wav"
+        mp4_path = work / f"part_{i:02d}.mp4"
+        make_slide(heading, paragraph, i, topic["title"], image_path)
+        make_audio(paragraph, wav_path)
+        dur = seconds(wav_path) + 0.25
+        run(["ffmpeg", "-y", "-loop", "1", "-i", str(image_path), "-i", str(wav_path),
+             "-t", f"{dur:.2f}", "-c:v", "libx264", "-preset", "ultrafast", "-r", "24",
+             "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-shortest", str(mp4_path)])
+        segment_paths.append(mp4_path)
+    concat_file = work / "concat.txt"
+    concat_file.write_text("".join(f"file '{p.resolve()}'\n" for p in segment_paths), encoding="utf-8")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    video_path = OUT / f"{topic['slug']}_{stamp}.mp4"
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file),
+         "-c", "copy", "-movflags", "+faststart", str(video_path)])
+    return video_path
+
+def youtube_client():
+    raw = os.environ.get("YOUTUBE_TOKEN_JSON", "")
+    if not raw:
+        raise RuntimeError("Missing YOUTUBE_TOKEN_JSON GitHub Actions secret.")
+    token_json = base64.b64decode(raw).decode("utf-8")
+    token_path = OUT / "token.json"
+    token_path.write_text(token_json, encoding="utf-8")
+    data = json.loads(token_json)
+    creds = Credentials.from_authorized_user_info(data, scopes=["https://www.googleapis.com/auth/youtube.upload"])
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        token_path.write_text(creds.to_json(), encoding="utf-8")
+    return build("youtube", "v3", credentials=creds, cache_discovery=False)
+
+def upload(video_path, topic):
+    yt = youtube_client()
+    description = (
+        f"{topic['title']}\n\n"
+        "This video is for general educational purposes only and is not financial, investment, "
+        "tax, or legal advice. Gold and Bitcoin prices can fall; do your own research and consult "
+        "a qualified professional for advice suited to your situation.\n\n"
+        "#Bitcoin #Gold #InvestingEducation"
+    )
+    body = {
+        "snippet": {
+            "title": topic["title"] + " | Gold & Bitcoin Explained",
+            "description": description,
+            "tags": ["Bitcoin", "Gold", "financial education", "market basics", "crypto education"],
+            "categoryId": "27"
+        },
+        "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}
+    }
+    req = yt.videos().insert(part="snippet,status", body=body,
+        media_body=MediaFileUpload(str(video_path), mimetype="video/mp4", resumable=True))
+    response = None
+    while response is None:
+        status, response = req.next_chunk()
+        if status:
+            print(f"Upload progress: {int(status.progress() * 100)}%")
+    print("Uploaded video:", response.get("id"), "https://www.youtube.com/watch?v=" + response.get("id", ""))
+
+def main():
+    topics = json.loads(Path("topics.json").read_text(encoding="utf-8"))
+    # Each scheduled run chooses a deterministic topic based on UTC date and run slot.
+    slot = os.environ.get("VIDEO_SLOT", "1")
+    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    seed = int(hashlib.sha256(f"{day}-{slot}".encode()).hexdigest()[:8], 16)
+    topic = topics[seed % len(topics)]
+    print("Selected topic:", topic["title"])
+    video = create_video(topic)
+    print("Created:", video, "size:", round(video.stat().st_size / 1024 / 1024, 1), "MB")
+    upload(video, topic)
+
+if __name__ == "__main__":
+    main()
