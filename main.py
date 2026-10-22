@@ -21,6 +21,7 @@ def run(cmd):
 
 def font(size, bold=False):
     candidates = [
+        "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf" if bold else "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
     ]
@@ -67,8 +68,8 @@ def make_slide(title, body, idx, topic_title, path):
     im.save(path, quality=92)
 
 def make_audio(text, wav_path):
-    # espeak-ng is installed by the GitHub workflow; use a free local synthetic voice.
-    run(["espeak-ng", "-v", "en-us", "-s", "142", "-p", "42", "-w", str(wav_path), text])
+    # Free Hindi speech synthesis; the workflow installs espeak-ng.
+    run(["espeak-ng", "-v", "hi", "-s", "138", "-p", "42", "-w", str(wav_path), text])
 
 def seconds(wav_path):
     out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -116,16 +117,16 @@ def upload(video_path, topic):
     yt = youtube_client()
     description = (
         f"{topic['title']}\n\n"
-        "This video is for general educational purposes only and is not financial, investment, "
-        "tax, or legal advice. Gold and Bitcoin prices can fall; do your own research and consult "
-        "a qualified professional for advice suited to your situation.\n\n"
-        "#Bitcoin #Gold #InvestingEducation"
+        "Yeh video sirf saamanya jaankari aur education ke liye hai. Yeh financial, investment, "
+        "tax ya legal advice nahi hai. Gold aur Bitcoin dono ki keemat gir sakti hai. Apni research "
+        "karein aur apni situation ke hisaab se qualified professional se salah lein.\n\n"
+        "#Bitcoin #Gold #FinancialEducation #Hindi"
     )
     body = {
         "snippet": {
             "title": topic["title"] + " | Gold & Bitcoin Explained",
             "description": description,
-            "tags": ["Bitcoin", "Gold", "financial education", "market basics", "crypto education"],
+            "tags": ["Bitcoin", "Gold", "Hindi", "Hinglish", "financial education", "market basics", "crypto education"],
             "categoryId": "27"
         },
         "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}
