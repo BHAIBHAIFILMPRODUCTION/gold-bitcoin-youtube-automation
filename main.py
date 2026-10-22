@@ -178,11 +178,11 @@ def upload(video_path, topic):
 
 def main():
     topics = json.loads(Path("topics.json").read_text(encoding="utf-8"))
-    # Each scheduled run chooses a deterministic topic based on UTC date and run slot.
+    # Cycle through topics in date order so adjacent daily runs do not randomly repeat.
     slot = os.environ.get("VIDEO_SLOT", "1")
-    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    seed = int(hashlib.sha256(f"{day}-{slot}".encode()).hexdigest()[:8], 16)
-    topic = topics[seed % len(topics)]
+    day_index = datetime.now(timezone.utc).date().toordinal()
+    slot_offset = int(hashlib.sha256(slot.encode()).hexdigest()[:8], 16) % len(topics)
+    topic = topics[(day_index + slot_offset) % len(topics)]
     print("Selected topic:", topic["title"])
     video = create_video(topic)
     print("Created:", video, "size:", round(video.stat().st_size / 1024 / 1024, 1), "MB")
