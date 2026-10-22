@@ -154,7 +154,7 @@ def upload(video_path, topic):
             "tags": ["Bitcoin", "Gold", "Hindi", "Hinglish", "financial education", "market basics", "crypto education"],
             "categoryId": "27"
         },
-        "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}
+        "status": {"privacyStatus": "unlisted", "selfDeclaredMadeForKids": False}
     }
     req = yt.videos().insert(part="snippet,status", body=body,
         media_body=MediaFileUpload(str(video_path), mimetype="video/mp4", resumable=True))
