@@ -1,42 +1,45 @@
-# Gold & Bitcoin — free YouTube automation starter
+# Gold & Bitcoin — Hindi YouTube Automation
 
-This starter creates a simple educational video with slides, synthetic English narration, and a financial disclaimer, then uploads it publicly to YouTube using the official YouTube Data API.
+This repository builds an educational Gold & Bitcoin video on GitHub Actions and uploads it through the official YouTube Data API.
 
-## What is free / what is not guaranteed
+## Current behavior
 
-- GitHub Actions standard runners are free for public repositories.
-- Python, FFmpeg, Pillow, and espeak-ng are free/open-source.
-- YouTube Data API has quota and policy limits.
-- No paid AI API is used. This means there is no LLM researching fresh news or writing nuanced new scripts. The included topics are evergreen educational scripts and the voice is synthetic/robotic.
-- Two daily uploads are attempted, not guaranteed. Workflow failures, OAuth revocation, quotas, upload limits, or YouTube policies can interrupt runs.
-- The code intentionally creates basic slide videos; review content quality before relying on public auto-publishing. Add original analysis and meaningful editing rather than mass-producing near-identical videos.
+- Scheduled for one run per day at **7:00 PM India Standard Time** (13:30 UTC). GitHub may delay scheduled runs during busy periods.
+- Uses five pre-written evergreen topics in Hindi. It cycles through them in order, then repeats after the fifth topic. This is **not yet a live-news or current-price research pipeline**.
+- Creates 8 visual scenes with a free synthetic Hindi voice (espeak-ng) and Hindi-capable Noto fonts.
+- Attempts to upload a custom 16:9 thumbnail after the video upload. YouTube may reject custom thumbnails if the channel is not eligible or API permissions are unavailable.
+- Scheduled uploads use **Public** visibility. The manual workflow defaults to a safe **validate-only** run and does not upload a video.
+- No paid AI API is used. Video originality and quality are limited by the supplied topic scripts. Add and fact-check more original scripts before relying on this for a long-running channel.
 
-## 1. Create a new public GitHub repository
+## 1. GitHub Actions
 
-Create a repository named `gold-bitcoin-youtube-automation`, set it to **Public**, and upload all files from this folder, including `.github/workflows/daily-videos.yml`.
+Open the repository's **Actions** tab and ensure Actions are enabled.
 
-Do not commit `token.json`, `client_secret.json`, access tokens, or API secrets.
+The workflow file is **.github/workflows/daily-videos.yml**; it runs daily at 13:30 UTC (7:00 PM IST). Scheduled runs use GitHub-hosted Linux runners, so your Windows PC does not need to stay on.
 
-## 2. Enable YouTube Data API and create OAuth credentials
+### Run a safe validation
 
-1. Open https://console.cloud.google.com/
-2. Create a project.
-3. Open APIs & Services → Library → enable **YouTube Data API v3**.
-4. Configure the OAuth consent screen. Add your own Google account as a test user if required.
-5. Create an OAuth Client ID of type **Desktop app** and download its JSON file as `client_secret.json`.
-6. Verify your YouTube account if you need to upload videos longer than 15 minutes. This starter normally creates shorter videos.
+1. Open **Actions**.
+2. Select **Build and upload Gold & Bitcoin video**.
+3. Choose **Run workflow**.
+4. Keep the **video_slot** input set to **validate** and start the run.
 
-## 3. Authorize your channel locally
+This mode installs the dependencies, compiles main.py, checks the Hindi topic JSON, and tests Hindi speech synthesis. It does **not** call the YouTube upload code.
 
-Use a computer with Python installed. Download/clone this repository and put `client_secret.json` in the project folder (do not upload it to GitHub).
+Do not change the input to **1** for testing unless you deliberately want to perform a real public upload.
 
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+## 2. YouTube API and OAuth setup
 
-Create `authorize.py` with:
-```python
+The repository connector cannot read repository secret values, so check the secret name in GitHub yourself. The required secret is **YOUTUBE_TOKEN_JSON**.
+
+1. Open https://console.cloud.google.com/ and create/select a Google Cloud project.
+2. Enable **YouTube Data API v3**.
+3. Configure the OAuth consent screen and authorize the Google account that owns your YouTube channel.
+4. Create an OAuth Client ID of type **Desktop app** and download its JSON as **client_secret.json**. Never commit this file.
+5. In the project folder, use Python and install requirements with **pip install -r requirements.txt**.
+6. Create **authorize.py** containing:
+
+~~~python
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
@@ -44,51 +47,34 @@ flow = InstalledAppFlow.from_client_secrets_file("client_secret.json", SCOPES)
 creds = flow.run_local_server(port=0, access_type="offline", prompt="consent")
 with open("token.json", "w", encoding="utf-8") as f:
     f.write(creds.to_json())
-print("Created token.json. Keep it secret.")
-```
+print("Created token.json. Keep it private.")
+~~~
 
-Run:
-```bash
-python authorize.py
-```
-Sign in to the Google account that owns the channel and approve upload access. Keep `token.json` private.
+7. Run **python authorize.py**, sign in to the correct Google account, and approve upload permission.
+8. In PowerShell, from the folder containing token.json, run:
 
-## 4. Add the GitHub Actions secret
-
-Encode `token.json` as one line of Base64.
-
-**Windows PowerShell:**
-```powershell
+~~~powershell
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("token.json")) | Set-Clipboard
-```
+~~~
 
-**macOS/Linux:**
-```bash
-base64 -w 0 token.json
-```
+9. In GitHub, go to **Settings → Secrets and variables → Actions → New repository secret**. Set the name to **YOUTUBE_TOKEN_JSON** and paste the clipboard value into the secret's value field.
 
-In your repository go to **Settings → Secrets and variables → Actions → New repository secret**:
-- Name: `YOUTUBE_TOKEN_JSON`
-- Value: paste the full Base64 output
+Never paste the token into ChatGPT/Claude, an issue, a commit, or a screenshot. Do not expose the secret value. The code decodes it inside the workflow runner only.
 
-Never put this value in source code, an issue, or a public message. If exposed, revoke the OAuth access and create a fresh token.
+The Python dependency constraint for google-auth is capped below 2.42.0 because the installed google-auth-oauthlib release requires that range.
 
-## 5. Run a test first
+## 3. Publishing behavior
 
-Open Actions → “Build and upload Gold & Bitcoin video” → Run workflow. The starter uses public upload mode. To test safely, change `privacyStatus` in `main.py` from `public` to `unlisted`, run once, inspect the result, then switch it back to `public` when satisfied.
-
-## 6. Schedule
-
-The workflow is set for 09:00 and 17:00 India Standard Time daily. GitHub scheduled workflows use UTC. GitHub may delay scheduled runs during high load; it is not an exact-time scheduler.
-
-## 7. Customize
-
-Edit `topics.json` with original, fact-checked scripts and add new topic objects. The script currently uses English synthetic narration and evergreen education, not live prices or breaking news. Never describe a generated price as current unless you add a reliable, timestamped data source.
+- Manual run with **video_slot=validate**: safe checks only; no YouTube upload.
+- Scheduled run at 7 PM IST: builds the selected Hindi topic and uploads it as **Public**.
+- Script topics recur after five days until more original topic scripts are added.
+- The code currently does not fetch live Gold/Bitcoin prices or breaking news. Do not label the video as breaking news or state a price as current unless a reliable, timestamped data source is added.
+- Uploads may fail because of missing/expired OAuth, YouTube quota, channel eligibility, or YouTube policy restrictions. A schedule alone does not guarantee a successful upload.
 
 ## Troubleshooting
 
-- `Missing YOUTUBE_TOKEN_JSON`: check the repository secret name.
-- `invalid_grant`: rerun local authorization and replace the secret with a fresh token. OAuth consent configuration can affect refresh-token lifetime.
-- `quotaExceeded`: check Google Cloud Console quota for the YouTube Data API.
-- `ffmpeg` or `espeak-ng` failure: inspect the Actions job log.
-- Upload succeeds but content quality is weak: improve scripts, visuals, and narration before leaving automatic public uploads enabled.
+- **Missing YOUTUBE_TOKEN_JSON:** add the repository secret with exactly that name.
+- **invalid_grant / expired authorization:** repeat the OAuth authorization locally and replace the secret with a fresh token.
+- **Dependency resolution error:** use the committed requirements.txt; it caps google-auth below 2.42.0.
+- **Hindi speech test fails:** inspect the validate run logs for the espeak-ng Hindi voice command.
+- **Thumbnail skipped:** check channel eligibility and YouTube API access; the video upload may still have succeeded.
