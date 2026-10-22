@@ -158,4 +158,8 @@ def build_topic():
         "slug": "gold-bitcoin-market-briefing",
         "scenes": scenes,
         "chart_data": chart_data,
+        "market_stats": {
+            "gold": (f"Gold: {fmt_price(gold['price'])} USD" if gold else "Gold quote unavailable"),
+            "bitcoin": (f"BTC: {fmt_price(btc['price'])} USD" if btc else "BTC quote unavailable"),
+        },
     }
