@@ -24,7 +24,7 @@ The workflow file is **.github/workflows/daily-videos.yml**; it runs daily at 13
 3. Choose **Run workflow**.
 4. Keep the **video_slot** input set to **validate** and start the run.
 
-This mode installs the dependencies, compiles main.py, checks the Hindi topic JSON, and tests Hindi speech synthesis. It does **not** call the YouTube upload code.
+This mode installs dependencies, compiles main.py, checks the Hindi topic JSON, tests Hindi speech synthesis, and checks whether the OAuth secret is present and structurally contains a refresh token without printing its value. It does **not** call the YouTube upload code. It does not perform a live Google authorization refresh.
 
 Do not change the input to **1** for testing unless you deliberately want to perform a real public upload.
 
