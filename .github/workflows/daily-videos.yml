@@ -44,11 +44,18 @@ jobs:
 
       - name: Validate configuration without uploading
         if: ${{ inputs.video_slot == 'validate' }}
+        env:
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
         run: |
           python -m compileall -q main.py
           python -c "import json; t=json.load(open('topics.json', encoding='utf-8')); assert t and all(len(x.get('scenes', [])) == 8 for x in t); print(f'Validated {len(t)} Hindi topics')"
           espeak-ng -v hi -w /tmp/hindi-check.wav "नमस्ते, यह सोना और बिटकॉइन की जानकारी है।"
           test -s /tmp/hindi-check.wav
+          if [ -n "${YOUTUBE_TOKEN_JSON:-}" ]; then
+            python -c "import os,base64,json; d=json.loads(base64.b64decode(os.environ['YOUTUBE_TOKEN_JSON'])); assert d.get('refresh_token'); print('YouTube OAuth secret is present and has a refresh token; value hidden')"
+          else
+            echo "::warning::YOUTUBE_TOKEN_JSON is missing; scheduled upload will fail until the repository secret is added."
+          fi
 
       - name: Build and upload video
         if: ${{ inputs.video_slot != 'validate' }}
