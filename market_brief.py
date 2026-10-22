@@ -119,11 +119,12 @@ def build_topic():
         return (f"{name}: current {fmt_price(current)}; recent 24-bar range {fmt_price(low)}–{fmt_price(high)}; "
                 f"short-term momentum {mom}; RSI estimate {rsi_text}. Treat range edges as observation zones, not guaranteed support/resistance.")
 
+    # Spoken copy is written like a presenter, not a feed reader. Keep raw URLs out of TTS.
     news_text = []
     for n in news[:4]:
-        news_text.append(f"{n['source']} reports: {n['title']}. Check original article for full context: {n['link']}" if n["link"] else f"{n['source']} reports: {n['title']}.")
+        news_text.append(f"According to {n['source']}, the headline to watch is: {n['title']}.")
     if not news_text:
-        news_text = ["Automated news feeds did not return usable headlines in this run. Do not claim a headline-driven move without checking a current, reputable news source."]
+        news_text = ["We could not verify a fresh market headline from the available feeds during this run. So we will not invent a news catalyst; check the original financial news sources before trading."]
     macro = []
     if dollar:
         macro.append(f"US dollar index is {fmt_price(dollar['price'])}; a strengthening dollar can pressure USD-priced gold and may tighten global financial conditions, but the relationship is not mechanical.")
@@ -139,14 +140,14 @@ def build_topic():
         macro.append("Broad equity-market data was unavailable; do not assume Bitcoin is tracking equities.")
 
     scenes = [
-        scene("GOLD & BITCOIN | GLOBAL MARKET BRIEFING", f"Updated {stamp}. We review the latest available quotes, macro drivers, verified headlines and conditional trading scenarios. This is market education, not a signal service or a promise of returns."),
-        scene("MARKET SNAPSHOT", describe("Gold futures (GC=F)", gold) + " " + describe("Bitcoin (BTC-USD)", btc)),
-        scene("GLOBAL MACRO CHECK", " ".join(macro)),
-        scene("LATEST MARKET NEWS", " ".join(news_text[:2])),
-        scene("MORE HEADLINES TO WATCH", " ".join(news_text[2:4]) if len(news_text) > 2 else "No additional relevant headline was returned by the available feeds. Check source links and publication times before acting."),
-        scene("GOLD TECHNICAL MAP", levels("Gold futures", gold) + " A possible bullish scenario needs a confirmed break and hold above the recent range high; a bearish scenario needs a break and hold below the range low. A failed breakout or choppy price action is a no-trade scenario."),
-        scene("BITCOIN TECHNICAL MAP", levels("Bitcoin", btc) + " A possible bullish scenario needs a confirmed break and hold above the recent range high; a bearish scenario needs a break and hold below the range low. Avoid chasing a fast candle; wait for confirmation and reassess if the level fails."),
-        scene("TRADE PLAN & RISK RULES", "Before any trade, define the entry trigger, invalidation level, stop distance, position size and target before entering. Prefer a plan with at least 1:2 potential reward-to-risk only when the chart supports it; this ratio does not make a trade profitable. Avoid major data releases if spreads or volatility are abnormal. Never risk money needed for essentials, and do not use leverage you do not understand."),
+        scene("GOLD & BITCOIN | GLOBAL MARKET BRIEFING", f"Good day, and welcome to your global markets briefing. It is {stamp}. I’m taking you through the latest available Gold and Bitcoin prices, the global forces moving markets, the headlines worth watching, and the levels traders may want to monitor. These are scenarios, not guaranteed signals."),
+        scene("MARKET SNAPSHOT", "First, let’s check the scoreboard. " + describe("Gold futures", gold) + " Now to Bitcoin. " + describe("Bitcoin", btc) + " Remember, these are the latest quotes returned by the data feed, not a promise that the price is still unchanged."),
+        scene("GLOBAL MACRO CHECK", "Now let’s zoom out to the bigger picture. " + " ".join(macro) + " These relationships can change quickly, so we look for confirmation rather than treating any single number as a trade signal."),
+        scene("LATEST MARKET NEWS", "Here are the headlines on our radar. " + " ".join(news_text[:2]) + " A headline alone does not tell us the market’s direction. We need to check when it was published, what was already expected, and how prices react."),
+        scene("MORE HEADLINES TO WATCH", "A couple more things to keep on the watchlist. " + (" ".join(news_text[2:4]) if len(news_text) > 2 else "No additional relevant headline was returned by the available feeds. We will not fill the gap with made-up news. Check publication times and original sources before acting.")),
+        scene("GOLD TECHNICAL MAP", "Now, let’s put Gold under the microscope. " + levels("Gold futures", gold) + " Here is the plan, not a prediction: a bullish scenario needs price to break and hold above the recent range high. A bearish scenario needs a clean break and hold below the range low. If price whipsaws or a breakout fails, standing aside is a valid decision."),
+        scene("BITCOIN TECHNICAL MAP", "Over to Bitcoin, where volatility can move quickly. " + levels("Bitcoin", btc) + " For a bullish scenario, look for a confirmed break and hold above the recent range high. For a bearish scenario, look for a break and hold below the recent range low. Avoid chasing a sudden candle; if the level fails, reassess rather than forcing a trade."),
+        scene("TRADE PLAN & RISK RULES", "Before we wrap up, here is the risk checklist. Decide the entry trigger, the level that proves the idea wrong, the stop distance, position size and target before placing a trade. A two-to-one potential reward-to-risk ratio is not a guarantee of profit. Be extra careful around major economic releases, and avoid trading when spreads or volatility are abnormal. Never risk money needed for essentials, and do not use leverage you do not fully understand. That’s your Gold and Bitcoin briefing. Stay patient, verify the data, and trade only with a plan."),
     ]
     chart_data = {
         "gold": (gold["closes"][-24:] if gold and len(gold["closes"]) >= 2 else []),
