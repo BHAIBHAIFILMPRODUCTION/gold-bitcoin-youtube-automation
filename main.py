@@ -230,7 +230,7 @@ def upload(video_path, topic):
     )
     body = {
         "snippet": {
-            "title": topic["title"] + " | Gold & Bitcoin Explained",
+            "title": (topic["title"][:70].rstrip(" |:-") + " | Market Analysis")[:100],
             "description": description,
             "tags": ["Bitcoin", "Gold", "XAUUSD", "BTCUSD", "market analysis", "global markets", "technical analysis", "trading education", "support resistance", "risk management"],
             "categoryId": "27"
