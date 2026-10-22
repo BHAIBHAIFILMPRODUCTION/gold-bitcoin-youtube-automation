@@ -6,7 +6,7 @@ on:
       video_slot:
         description: "Optional video slot"
         required: false
-        default: "1"
+        default: "validate"
   schedule:
     # Daily at 7:00 PM India Standard Time (13:30 UTC)
     - cron: "30 13 * * *"
