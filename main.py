@@ -43,7 +43,10 @@ def wrap_words(draw, text, fnt, max_width):
     if line: lines.append(line)
     return lines
 
-def make_slide(title, body, idx, topic_title, path):
+def fmt_chart_value(value):
+    return f"{value:,.2f}"
+
+def make_slide(title, body, idx, topic_title, path, chart_data=None):
     im = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(im)
     # subtle gold frame and decorative chart-like lines
@@ -58,14 +61,33 @@ def make_slide(title, body, idx, topic_title, path):
     for line in wrap_words(d, body, font(38), W-240):
         d.text((110, y), line, font=font(38), fill=MUTED)
         y += 58
-    # decorative bar chart at bottom
-    base_y = H-155
-    heights = [45, 70, 55, 100, 80, 125, 95, 140, 115, 155, 130, 175]
-    for i, h in enumerate(heights):
-        x = 110 + i*34
-        d.rounded_rectangle((x, base_y-h, x+18, base_y), radius=5, fill=GOLD if i % 3 else (86, 148, 186))
-    d.text((650, H-145), topic_title[:70], font=font(25), fill=WHITE)
-    d.text((650, H-105), "Educational content • Not investment advice", font=font(22), fill=MUTED)
+    # Use real recent market closes on the relevant technical-analysis slides.
+    series = []
+    series_label = ""
+    if idx == 6 and chart_data:
+        series, series_label = chart_data.get("gold", []), "GOLD FUTURES • RECENT HOURLY CLOSES"
+    elif idx == 7 and chart_data:
+        series, series_label = chart_data.get("bitcoin", []), "BITCOIN • RECENT HOURLY CLOSES"
+    if len(series) >= 2:
+        left, right, top, bottom = 760, W-125, 700, H-170
+        d.text((left, top-42), series_label, font=font(23, True), fill=GOLD)
+        d.line((left, bottom, right, bottom), fill=(75, 87, 108), width=2)
+        lo, hi = min(series), max(series)
+        span = hi-lo or 1.0
+        pts = []
+        for i, value in enumerate(series):
+            x = left + int(i * (right-left) / (len(series)-1))
+            yv = bottom - int((value-lo) / span * (bottom-top))
+            pts.append((x, yv))
+        d.line(pts, fill=(86, 180, 220), width=5)
+        for px, py in (pts[0], pts[-1]):
+            d.ellipse((px-6, py-6, px+6, py+6), fill=GOLD)
+        d.text((left, bottom+12), fmt_chart_value(lo), font=font(20), fill=MUTED)
+        d.text((right-180, bottom+12), fmt_chart_value(hi), font=font(20), fill=MUTED)
+    else:
+        d.text((110, H-170), "LIVE MARKET DATA UNAVAILABLE — VERIFY BEFORE TRADING", font=font(24, True), fill=GOLD)
+    d.text((110, H-105), topic_title[:90], font=font(23), fill=WHITE)
+    d.text((110, H-70), "Educational market scenarios • Not investment advice", font=font(20), fill=MUTED)
     im.save(path, quality=92)
 
 def make_audio(text, wav_path):
@@ -85,7 +107,7 @@ def create_video(topic):
         image_path = work / f"slide_{i:02d}.jpg"
         wav_path = work / f"voice_{i:02d}.wav"
         mp4_path = work / f"part_{i:02d}.mp4"
-        make_slide(heading, paragraph, i, topic["title"], image_path)
+        make_slide(heading, paragraph, i, topic["title"], image_path, topic.get("chart_data"))
         make_audio(paragraph, wav_path)
         dur = seconds(wav_path) + 0.25
         run(["ffmpeg", "-y", "-loop", "1", "-i", str(image_path), "-i", str(wav_path),
