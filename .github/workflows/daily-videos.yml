@@ -29,7 +29,7 @@ jobs:
       - name: Install system tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg espeak-ng
+          sudo apt-get install -y ffmpeg espeak-ng fonts-noto-core
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -44,7 +44,11 @@ jobs:
 
       - name: Validate configuration without uploading
         if: ${{ inputs.video_slot == 'validate' }}
-        run: python -m compileall -q main.py
+        run: |
+          python -m compileall -q main.py
+          python -c "import json; t=json.load(open('topics.json', encoding='utf-8')); assert t and all(len(x.get('scenes', [])) == 8 for x in t); print(f'Validated {len(t)} Hindi topics')"
+          espeak-ng -v hi -w /tmp/hindi-check.wav "नमस्ते, यह सोना और बिटकॉइन की जानकारी है।"
+          test -s /tmp/hindi-check.wav
 
       - name: Build and upload video
         if: ${{ inputs.video_slot != 'validate' }}
