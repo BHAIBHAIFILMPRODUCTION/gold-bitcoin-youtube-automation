@@ -99,6 +99,30 @@ def create_video(topic):
          "-c", "copy", "-movflags", "+faststart", str(video_path)])
     return video_path
 
+def make_thumbnail(topic):
+    """Create an original 16:9 Hindi thumbnail locally with Pillow."""
+    thumb_path = OUT / f"{topic['slug']}_thumbnail.jpg"
+    im = Image.new("RGB", (1280, 720), BG)
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle((28, 28, 1252, 692), radius=30, outline=GOLD, width=6)
+    d.text((75, 72), "GOLD • BITCOIN • HINDI EXPLAINED", font=font(27, True), fill=GOLD)
+    # Keep the title to the left so the decorative bars do not obscure the text.
+    title_font = font(54, True)
+    lines = wrap_words(d, topic["title"], title_font, 900)
+    y = 190
+    for line in lines[:4]:
+        d.text((75, y), line, font=title_font, fill=WHITE)
+        y += 72
+    d.text((78, 580), "MARKET EDUCATION  •  NOT INVESTMENT ADVICE", font=font(20, True), fill=MUTED)
+    base_y = 520
+    heights = [70, 110, 86, 145, 116, 180, 138, 205]
+    for i, h in enumerate(heights):
+        x = 960 + i * 30
+        d.rounded_rectangle((x, base_y - h, x + 18, base_y), radius=5,
+                            fill=GOLD if i % 2 else (86, 148, 186))
+    im.save(thumb_path, format="JPEG", quality=92, optimize=True)
+    return thumb_path
+
 def youtube_client():
     raw = os.environ.get("YOUTUBE_TOKEN_JSON", "")
     if not raw:
@@ -138,7 +162,19 @@ def upload(video_path, topic):
         status, response = req.next_chunk()
         if status:
             print(f"Upload progress: {int(status.progress() * 100)}%")
-    print("Uploaded video:", response.get("id"), "https://www.youtube.com/watch?v=" + response.get("id", ""))
+    video_id = response.get("id")
+    print("Uploaded video:", video_id, "https://www.youtube.com/watch?v=" + video_id if video_id else "")
+    if video_id:
+        try:
+            thumbnail_path = make_thumbnail(topic)
+            yt.thumbnails().set(
+                videoId=video_id,
+                media_body=MediaFileUpload(str(thumbnail_path), mimetype="image/jpeg")
+            ).execute()
+            print("Custom thumbnail uploaded.")
+        except Exception as exc:
+            # Video upload is still valid if this channel/API does not permit custom thumbnails.
+            print("Thumbnail upload skipped; check channel eligibility/API access:", type(exc).__name__)
 
 def main():
     topics = json.loads(Path("topics.json").read_text(encoding="utf-8"))
