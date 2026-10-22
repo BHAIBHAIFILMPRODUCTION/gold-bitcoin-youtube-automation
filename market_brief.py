@@ -148,8 +148,13 @@ def build_topic():
         scene("BITCOIN TECHNICAL MAP", levels("Bitcoin", btc) + " A possible bullish scenario needs a confirmed break and hold above the recent range high; a bearish scenario needs a break and hold below the range low. Avoid chasing a fast candle; wait for confirmation and reassess if the level fails."),
         scene("TRADE PLAN & RISK RULES", "Before any trade, define the entry trigger, invalidation level, stop distance, position size and target before entering. Prefer a plan with at least 1:2 potential reward-to-risk only when the chart supports it; this ratio does not make a trade profitable. Avoid major data releases if spreads or volatility are abnormal. Never risk money needed for essentials, and do not use leverage you do not understand."),
     ]
+    chart_data = {
+        "gold": (gold["closes"][-24:] if gold and len(gold["closes"]) >= 2 else []),
+        "bitcoin": (btc["closes"][-24:] if btc and len(btc["closes"]) >= 2 else []),
+    }
     return {
         "title": f"Gold & Bitcoin Market Briefing | Global News & Trade Scenarios | {now.strftime('%d %b %Y')}",
         "slug": "gold-bitcoin-market-briefing",
         "scenes": scenes,
+        "chart_data": chart_data,
     }
