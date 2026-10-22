@@ -52,7 +52,26 @@ jobs:
           espeak-ng -v hi -w /tmp/hindi-check.wav "नमस्ते, यह सोना और बिटकॉइन की जानकारी है।"
           test -s /tmp/hindi-check.wav
           if [ -n "${YOUTUBE_TOKEN_JSON:-}" ]; then
-            python -c "import os,base64,json; d=json.loads(base64.b64decode(os.environ['YOUTUBE_TOKEN_JSON'])); assert d.get('refresh_token'); print('YouTube OAuth secret is present and has a refresh token; value hidden')"
+            python - <<'PY'
+          import os, base64, json
+          from google.oauth2.credentials import Credentials
+          from google.auth.transport.requests import Request
+          try:
+              raw = base64.b64decode(os.environ["YOUTUBE_TOKEN_JSON"], validate=True)
+              data = json.loads(raw.decode("utf-8"))
+              creds = Credentials.from_authorized_user_info(
+                  data, scopes=["https://www.googleapis.com/auth/youtube.upload"]
+              )
+              if not creds.refresh_token:
+                  raise RuntimeError("OAuth token has no refresh token")
+              creds.refresh(Request())
+              if not creds.valid:
+                  raise RuntimeError("OAuth credentials are not valid after refresh")
+              print("YouTube OAuth refresh succeeded; no video was uploaded.")
+          except Exception as exc:
+              print("YouTube OAuth validation failed:", type(exc).__name__)
+              raise SystemExit(1)
+          PY
           else
             echo "::warning::YOUTUBE_TOKEN_JSON is missing; scheduled upload will fail until the repository secret is added."
           fi
