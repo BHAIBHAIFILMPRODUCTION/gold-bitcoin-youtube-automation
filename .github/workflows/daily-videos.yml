@@ -4,13 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       video_slot:
-        description: "1 for morning, 2 for evening"
+        description: "Optional video slot"
         required: false
         default: "1"
   schedule:
-    # 09:00 and 17:00 India Standard Time (UTC is 03:30 and 11:30)
-    - cron: "30 3 * * *"
-    - cron: "30 11 * * *"
+    # Daily at 7:00 PM India Standard Time (13:30 UTC)
+    - cron: "30 13 * * *"
 
 permissions:
   contents: read
@@ -44,5 +43,5 @@ jobs:
       - name: Build and upload video
         env:
           YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
-          VIDEO_SLOT: ${{ github.event.schedule == '30 11 * * *' && '2' || inputs.video_slot || '1' }}
+          VIDEO_SLOT: ${{ inputs.video_slot || '1' }}
         run: python main.py
