@@ -22,8 +22,8 @@ def run(cmd):
 
 def font(size, bold=False):
     candidates = [
-        "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf" if bold else "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf" if bold else "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf",
         "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
     ]
     for p in candidates:
@@ -49,50 +49,77 @@ def fmt_chart_value(value):
 def make_slide(title, body, idx, topic_title, path, chart_data=None):
     im = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(im)
-    # subtle gold frame and decorative chart-like lines
-    d.rounded_rectangle((55, 55, W-55, H-55), radius=28, outline=GOLD, width=4)
-    d.text((105, 95), "GOLD • BITCOIN • MARKET EDUCATION", font=font(30, True), fill=GOLD)
-    d.text((105, 165), f"{idx:02d}  /  08", font=font(27), fill=MUTED)
-    y = 250
-    for line in wrap_words(d, title, font(66, True), W-220):
-        d.text((105, y), line, font=font(66, True), fill=WHITE)
-        y += 82
-    y += 38
-    for line in wrap_words(d, body, font(38), W-240):
-        d.text((110, y), line, font=font(38), fill=MUTED)
-        y += 58
-    # Use real recent market closes on the relevant technical-analysis slides.
-    series = []
-    series_label = ""
-    if idx == 6 and chart_data:
-        series, series_label = chart_data.get("gold", []), "GOLD FUTURES • RECENT HOURLY CLOSES"
-    elif idx == 7 and chart_data:
-        series, series_label = chart_data.get("bitcoin", []), "BITCOIN • RECENT HOURLY CLOSES"
-    if len(series) >= 2:
-        left, right, top, bottom = 760, W-125, 700, H-170
-        d.text((left, top-42), series_label, font=font(23, True), fill=GOLD)
-        d.line((left, bottom, right, bottom), fill=(75, 87, 108), width=2)
-        lo, hi = min(series), max(series)
-        span = hi-lo or 1.0
-        pts = []
-        for i, value in enumerate(series):
-            x = left + int(i * (right-left) / (len(series)-1))
-            yv = bottom - int((value-lo) / span * (bottom-top))
-            pts.append((x, yv))
-        d.line(pts, fill=(86, 180, 220), width=5)
-        for px, py in (pts[0], pts[-1]):
-            d.ellipse((px-6, py-6, px+6, py+6), fill=GOLD)
-        d.text((left, bottom+12), fmt_chart_value(lo), font=font(20), fill=MUTED)
-        d.text((right-180, bottom+12), fmt_chart_value(hi), font=font(20), fill=MUTED)
+    d.rounded_rectangle((42, 42, W-42, H-42), radius=28, outline=(63, 80, 111), width=3)
+    d.rectangle((43, 43, W-43, 54), fill=GOLD)
+    d.text((88, 82), "GLOBAL MARKETS  /  GOLD & BITCOIN", font=font(28, True), fill=GOLD)
+    d.text((W-240, 85), f"{idx:02d} / 08", font=font(26, True), fill=MUTED)
+
+    is_chart_slide = idx in (6, 7)
+    title_width = 800 if is_chart_slide else W-180
+    title_font = font(57 if is_chart_slide else 64, True)
+    y = 160
+    for line in wrap_words(d, title, title_font, title_width):
+        d.text((88, y), line, font=title_font, fill=WHITE)
+        y += 72 if is_chart_slide else 80
+    y += 24
+
+    if is_chart_slide:
+        body_width = 760
+        body_font = font(31)
+        for line in wrap_words(d, body, body_font, body_width):
+            if y > 760:
+                break
+            d.text((92, y), line, font=body_font, fill=MUTED)
+            y += 46
+
+        series = []
+        series_label = ""
+        if idx == 6 and chart_data:
+            series, series_label = chart_data.get("gold", []), "GOLD FUTURES • RECENT HOURLY CLOSES"
+        elif idx == 7 and chart_data:
+            series, series_label = chart_data.get("bitcoin", []), "BITCOIN • RECENT HOURLY CLOSES"
+        panel = (900, 245, 1780, 785)
+        d.rounded_rectangle(panel, radius=22, fill=(12, 22, 42), outline=(65, 82, 111), width=2)
+        d.text((935, 272), series_label or "RECENT MARKET DATA", font=font(23, True), fill=GOLD)
+        if len(series) >= 2:
+            left, right, top, bottom = 940, 1740, 340, 700
+            lo, hi = min(series), max(series)
+            span = hi-lo or 1.0
+            for gy in (400, 475, 550, 625, 700):
+                d.line((left, gy, right, gy), fill=(35, 49, 72), width=1)
+            pts = []
+            for i, value in enumerate(series):
+                x = left + int(i * (right-left) / (len(series)-1))
+                py = bottom - int((value-lo) / span * (bottom-top))
+                pts.append((x, py))
+            d.line(pts, fill=(70, 190, 225), width=6)
+            d.ellipse((pts[-1][0]-9, pts[-1][1]-9, pts[-1][0]+9, pts[-1][1]+9), fill=GOLD)
+            d.text((940, 720), f"Recent low: {fmt_chart_value(lo)}", font=font(22), fill=MUTED)
+            d.text((1380, 720), f"Recent high: {fmt_chart_value(hi)}", font=font(22), fill=MUTED)
+        else:
+            d.text((960, 440), "LIVE PRICE DATA UNAVAILABLE", font=font(28, True), fill=GOLD)
+            d.text((960, 500), "Verify data before trading", font=font(24), fill=MUTED)
     else:
-        d.text((110, H-170), "LIVE MARKET DATA UNAVAILABLE — VERIFY BEFORE TRADING", font=font(24, True), fill=GOLD)
-    d.text((110, H-105), topic_title[:90], font=font(23), fill=WHITE)
-    d.text((110, H-70), "Educational market scenarios • Not investment advice", font=font(20), fill=MUTED)
-    im.save(path, quality=92)
+        body_font = font(37)
+        for line in wrap_words(d, body, body_font, W-210):
+            if y > 790:
+                break
+            d.text((92, y), line, font=body_font, fill=MUTED)
+            y += 57
+        # Purposeful visual treatment: a clean data-led market strip, not fake chart bars.
+        d.rounded_rectangle((90, 820, W-90, 930), radius=18, fill=(14, 26, 48), outline=(50, 68, 99), width=2)
+        d.text((120, 850), "NEWS", font=font(27, True), fill=GOLD)
+        d.text((300, 850), "PRICE ACTION", font=font(27, True), fill=(82, 197, 229))
+        d.text((650, 850), "SCENARIOS", font=font(27, True), fill=(115, 220, 158))
+        d.text((1030, 850), "RISK FIRST", font=font(27, True), fill=WHITE)
+
+    d.text((92, 965), topic_title[:115], font=font(21), fill=WHITE)
+    d.text((W-555, 965), "EDUCATIONAL ANALYSIS • NOT FINANCIAL ADVICE", font=font(18, True), fill=MUTED)
+    im.save(path, quality=94)
 
 def make_audio(text, wav_path):
-    # Free Hindi speech synthesis; the workflow installs espeak-ng.
-    run(["espeak-ng", "-v", "hi", "-s", "138", "-p", "42", "-w", str(wav_path), text])
+    # Clear English narration for the English-language market brief.
+    run(["espeak-ng", "-v", "en-us", "-s", "148", "-p", "42", "-w", str(wav_path), text])
 
 def seconds(wav_path):
     out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -196,16 +223,16 @@ def upload(video_path, topic):
     yt = youtube_client()
     description = (
         f"{topic['title']}\n\n"
-        "Yeh video sirf saamanya jaankari aur education ke liye hai. Yeh financial, investment, "
-        "tax ya legal advice nahi hai. Gold aur Bitcoin dono ki keemat gir sakti hai. Apni research "
-        "karein aur apni situation ke hisaab se qualified professional se salah lein.\n\n"
-        "#Bitcoin #Gold #FinancialEducation #Hindi"
+        "An educational review of available market quotes, global headlines, technical levels and conditional trade scenarios. "
+        "Market data and news can be delayed or incomplete. Verify all quotes and original sources before acting. "
+        "This is not financial advice or a guaranteed trading signal. Gold and Bitcoin can lose value; manage risk and avoid risking money you cannot afford to lose.\n\n"
+        "#Gold #Bitcoin #MarketAnalysis #TradingEducation #GlobalMarkets"
     )
     body = {
         "snippet": {
             "title": topic["title"] + " | Gold & Bitcoin Explained",
             "description": description,
-            "tags": ["Bitcoin", "Gold", "Hindi", "Hinglish", "financial education", "market basics", "crypto education"],
+            "tags": ["Bitcoin", "Gold", "XAUUSD", "BTCUSD", "market analysis", "global markets", "technical analysis", "trading education", "support resistance", "risk management"],
             "categoryId": "27"
         },
         "status": {"privacyStatus": "unlisted", "selfDeclaredMadeForKids": False}
