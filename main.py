@@ -123,27 +123,59 @@ def create_video(topic):
     return video_path
 
 def make_thumbnail(topic):
-    """Create an original 16:9 Hindi thumbnail locally with Pillow."""
+    """Create a high-contrast, original 16:9 English market-analysis thumbnail."""
     thumb_path = OUT / f"{topic['slug']}_thumbnail.jpg"
-    im = Image.new("RGB", (1280, 720), BG)
+    im = Image.new("RGB", (1280, 720), (7, 13, 29))
     d = ImageDraw.Draw(im)
-    d.rounded_rectangle((28, 28, 1252, 692), radius=30, outline=GOLD, width=6)
-    d.text((75, 72), "GOLD • BITCOIN • HINDI EXPLAINED", font=font(27, True), fill=GOLD)
-    # Keep the title to the left so the decorative bars do not obscure the text.
-    title_font = font(54, True)
-    lines = wrap_words(d, topic["title"], title_font, 900)
-    y = 190
-    for line in lines[:4]:
-        d.text((75, y), line, font=title_font, fill=WHITE)
-        y += 72
-    d.text((78, 580), "MARKET EDUCATION  •  NOT INVESTMENT ADVICE", font=font(20, True), fill=MUTED)
-    base_y = 520
-    heights = [70, 110, 86, 145, 116, 180, 138, 205]
-    for i, h in enumerate(heights):
-        x = 960 + i * 30
-        d.rounded_rectangle((x, base_y - h, x + 18, base_y), radius=5,
-                            fill=GOLD if i % 2 else (86, 148, 186))
-    im.save(thumb_path, format="JPEG", quality=92, optimize=True)
+
+    # High-contrast editorial layout; no fake profit claims or invented price targets.
+    d.rectangle((0, 0, 1280, 16), fill=GOLD)
+    d.rectangle((0, 16, 1280, 720), outline=(37, 53, 80), width=3)
+    d.text((58, 48), "GLOBAL MARKETS  |  DAILY ANALYSIS", font=font(26, True), fill=GOLD)
+
+    # Main headline sized to remain readable on mobile.
+    d.text((55, 145), "GOLD", font=font(102, True), fill=(255, 204, 77))
+    d.text((55, 252), "vs", font=font(52, True), fill=(220, 228, 240))
+    d.text((55, 315), "BITCOIN", font=font(88, True), fill=(244, 247, 252))
+
+    d.rounded_rectangle((55, 445, 705, 510), radius=14, fill=(21, 34, 58), outline=(75, 102, 143), width=2)
+    d.text((78, 463), "NEWS  •  PRICE LEVELS  •  TRADE SETUPS", font=font(22, True), fill=(232, 238, 248))
+    d.text((58, 626), "EDUCATIONAL ANALYSIS  |  MANAGE RISK", font=font(20, True), fill=(165, 181, 204))
+
+    # Chart panel on the right: use actual recent closes when available.
+    panel = (760, 118, 1218, 575)
+    d.rounded_rectangle(panel, radius=24, fill=(12, 22, 42), outline=(65, 82, 111), width=3)
+    d.text((795, 145), "RECENT PRICE ACTION", font=font(22, True), fill=(191, 205, 226))
+    series = []
+    chart_data = topic.get("chart_data") or {}
+    series = chart_data.get("gold") or chart_data.get("bitcoin") or []
+    if len(series) >= 2:
+        left, right, top, bottom = 795, 1180, 215, 480
+        lo, hi = min(series), max(series)
+        span = hi - lo or 1.0
+        pts = []
+        for i, value in enumerate(series):
+            x = left + int(i * (right-left) / (len(series)-1))
+            y = bottom - int((value-lo) / span * (bottom-top))
+            pts.append((x, y))
+        # Faint grid lines behind the real price series.
+        for gy in (260, 325, 390, 455):
+            d.line((left, gy, right, gy), fill=(35, 49, 72), width=1)
+        d.line(pts, fill=(70, 190, 225), width=6)
+        d.ellipse((pts[-1][0]-8, pts[-1][1]-8, pts[-1][0]+8, pts[-1][1]+8), fill=GOLD)
+        direction = "UP" if series[-1] > series[0] else "DOWN" if series[-1] < series[0] else "FLAT"
+        direction_color = (76, 205, 140) if direction == "UP" else (255, 112, 112) if direction == "DOWN" else (220, 228, 240)
+        d.text((795, 505), f"RECENT TREND: {direction}", font=font(23, True), fill=direction_color)
+    else:
+        # Honest fallback; never draw fabricated chart data.
+        d.text((795, 270), "MARKET DATA", font=font(29, True), fill=(225, 232, 244))
+        d.text((795, 315), "unavailable", font=font(27), fill=(165, 181, 204))
+        d.text((795, 380), "Check data before trading", font=font(19), fill=(165, 181, 204))
+
+    # Date stamp adds freshness without claiming the video is a live stream.
+    date_text = datetime.now(timezone.utc).strftime("%d %b %Y  |  UTC")
+    d.text((795, 545), date_text, font=font(19, True), fill=(165, 181, 204))
+    im.save(thumb_path, format="JPEG", quality=94, optimize=True)
     return thumb_path
 
 def youtube_client():
