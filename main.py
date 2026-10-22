@@ -1,4 +1,5 @@
 import os, json, base64, subprocess, textwrap, random, hashlib
+from market_brief import build_topic
 from datetime import datetime, timezone
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
@@ -177,13 +178,9 @@ def upload(video_path, topic):
             print("Thumbnail upload skipped; check channel eligibility/API access:", type(exc).__name__)
 
 def main():
-    topics = json.loads(Path("topics.json").read_text(encoding="utf-8"))
-    # Cycle through topics in date order so adjacent daily runs do not randomly repeat.
-    slot = os.environ.get("VIDEO_SLOT", "1")
-    day_index = datetime.now(timezone.utc).date().toordinal()
-    slot_offset = int(hashlib.sha256(slot.encode()).hexdigest()[:8], 16) % len(topics)
-    topic = topics[(day_index + slot_offset) % len(topics)]
-    print("Selected topic:", topic["title"])
+    # Build a fresh English-language briefing from current market data and verified RSS headlines.
+    topic = build_topic()
+    print("Selected live-market topic:", topic["title"])
     video = create_video(topic)
     print("Created:", video, "size:", round(video.stat().st_size / 1024 / 1024, 1), "MB")
     upload(video, topic)
