@@ -46,9 +46,16 @@ def wrap_words(draw, text, fnt, max_width):
 def fmt_chart_value(value):
     return f"{value:,.2f}"
 
-def make_slide(title, body, idx, topic_title, path, chart_data=None):
+def make_slide(title, body, idx, topic_title, path, chart_data=None, market_stats=None):
     im = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(im)
+    # Broadcast-style dark studio backdrop with subtle grid and glow accents.
+    for gx in range(80, W-80, 120):
+        d.line((gx, 60, gx, 940), fill=(15, 25, 44), width=1)
+    for gy in range(100, 940, 90):
+        d.line((60, gy, W-60, gy), fill=(15, 25, 44), width=1)
+    d.ellipse((1320, -250, 2070, 500), fill=(13, 27, 48))
+    d.ellipse((-300, 650, 500, 1450), fill=(12, 24, 43))
     d.rounded_rectangle((42, 42, W-42, H-42), radius=28, outline=(63, 80, 111), width=3)
     d.rectangle((43, 43, W-43, 54), fill=GOLD)
     d.text((88, 82), "GLOBAL MARKETS  /  GOLD & BITCOIN", font=font(28, True), fill=GOLD)
@@ -106,12 +113,21 @@ def make_slide(title, body, idx, topic_title, path, chart_data=None):
                 break
             d.text((92, y), line, font=body_font, fill=MUTED)
             y += 57
-        # Purposeful visual treatment: a clean data-led market strip, not fake chart bars.
-        d.rounded_rectangle((90, 820, W-90, 930), radius=18, fill=(14, 26, 48), outline=(50, 68, 99), width=2)
-        d.text((120, 850), "NEWS", font=font(27, True), fill=GOLD)
-        d.text((300, 850), "PRICE ACTION", font=font(27, True), fill=(82, 197, 229))
-        d.text((650, 850), "SCENARIOS", font=font(27, True), fill=(115, 220, 158))
-        d.text((1030, 850), "RISK FIRST", font=font(27, True), fill=WHITE)
+        # Lower-third studio panel plus live-data cards; values come from this run's quote feed.
+        d.rounded_rectangle((90, 785, W-90, 925), radius=18, fill=(12, 22, 42), outline=(50, 68, 99), width=2)
+        d.text((120, 806), "MARKET DESK", font=font(23, True), fill=GOLD)
+        d.text((120, 850), "NEWS", font=font(24, True), fill=WHITE)
+        d.text((310, 850), "PRICE ACTION", font=font(24, True), fill=(82, 197, 229))
+        d.text((650, 850), "SCENARIOS", font=font(24, True), fill=(115, 220, 158))
+        d.text((1010, 850), "RISK FIRST", font=font(24, True), fill=WHITE)
+        d.text((1435, 806), "QUOTE CHECK", font=font(20, True), fill=MUTED)
+        if market_stats:
+            gold_label = market_stats.get("gold", "Gold quote unavailable")
+            btc_label = market_stats.get("bitcoin", "Bitcoin quote unavailable")
+        else:
+            gold_label, btc_label = "Gold quote unavailable", "Bitcoin quote unavailable"
+        d.text((1435, 840), gold_label[:38], font=font(18, True), fill=(255, 204, 77))
+        d.text((1435, 875), btc_label[:38], font=font(18, True), fill=(82, 197, 229))
 
     d.text((92, 965), topic_title[:115], font=font(21), fill=WHITE)
     d.text((W-555, 965), "EDUCATIONAL ANALYSIS • NOT FINANCIAL ADVICE", font=font(18, True), fill=MUTED)
@@ -145,7 +161,7 @@ def create_video(topic):
         image_path = work / f"slide_{i:02d}.jpg"
         audio_path = work / f"voice_{i:02d}.mp3"
         mp4_path = work / f"part_{i:02d}.mp4"
-        make_slide(heading, paragraph, i, topic["title"], image_path, topic.get("chart_data"))
+        make_slide(heading, paragraph, i, topic["title"], image_path, topic.get("chart_data"), topic.get("market_stats"))
         make_audio(paragraph, audio_path)
         dur = seconds(audio_path) + 0.35
         # Gentle Ken Burns motion makes each scene feel like an edited news package.
