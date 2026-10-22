@@ -117,9 +117,20 @@ def make_slide(title, body, idx, topic_title, path, chart_data=None):
     d.text((W-555, 965), "EDUCATIONAL ANALYSIS • NOT FINANCIAL ADVICE", font=font(18, True), fill=MUTED)
     im.save(path, quality=94)
 
-def make_audio(text, wav_path):
-    # Clear English narration for the English-language market brief.
-    run(["espeak-ng", "-v", "en-us", "-s", "148", "-p", "42", "-w", str(wav_path), text])
+def make_audio(text, audio_path):
+    """Use a natural neural English voice; fall back if the online voice service is unavailable."""
+    try:
+        run(["python", "-m", "edge_tts", "--voice", "en-US-GuyNeural",
+             "--rate=-5%", "--volume=+0%", "--text", text, "--write-media", str(audio_path)])
+        if not audio_path.exists() or audio_path.stat().st_size < 1000:
+            raise RuntimeError("Neural TTS returned an empty audio file")
+        print("Narration engine: neural English voice (en-US-GuyNeural)")
+    except Exception as exc:
+        print("Neural voice unavailable; using local fallback:", type(exc).__name__)
+        fallback_wav = audio_path.with_suffix(".fallback.wav")
+        run(["espeak-ng", "-v", "en-us", "-s", "145", "-p", "42", "-w", str(fallback_wav), text])
+        run(["ffmpeg", "-y", "-i", str(fallback_wav), "-codec:a", "libmp3lame", "-q:a", "3", str(audio_path)])
+        fallback_wav.unlink(missing_ok=True)
 
 def seconds(wav_path):
     out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -132,14 +143,17 @@ def create_video(topic):
     segment_paths = []
     for i, (heading, paragraph) in enumerate(topic["scenes"], start=1):
         image_path = work / f"slide_{i:02d}.jpg"
-        wav_path = work / f"voice_{i:02d}.wav"
+        audio_path = work / f"voice_{i:02d}.mp3"
         mp4_path = work / f"part_{i:02d}.mp4"
         make_slide(heading, paragraph, i, topic["title"], image_path, topic.get("chart_data"))
-        make_audio(paragraph, wav_path)
-        dur = seconds(wav_path) + 0.25
-        run(["ffmpeg", "-y", "-loop", "1", "-i", str(image_path), "-i", str(wav_path),
-             "-t", f"{dur:.2f}", "-c:v", "libx264", "-preset", "ultrafast", "-r", "24",
-             "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-shortest", str(mp4_path)])
+        make_audio(paragraph, audio_path)
+        dur = seconds(audio_path) + 0.35
+        # Gentle Ken Burns motion makes each scene feel like an edited news package.
+        motion = "zoompan=z='min(zoom+0.00035,1.07)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=24,format=yuv420p"
+        run(["ffmpeg", "-y", "-loop", "1", "-framerate", "24", "-i", str(image_path), "-i", str(audio_path),
+             "-t", f"{dur:.2f}", "-vf", motion, "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+             "-r", "24", "-c:a", "aac", "-b:a", "160k", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+             "-shortest", str(mp4_path)])
         segment_paths.append(mp4_path)
     concat_file = work / "concat.txt"
     concat_file.write_text("".join(f"file '{p.resolve()}'\n" for p in segment_paths), encoding="utf-8")
