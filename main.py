@@ -92,6 +92,7 @@ def make_slide(title, body, idx, topic_title, path, chart_data=None, market_stat
             left, right, top, bottom = 940, 1740, 340, 700
             lo, hi = min(series), max(series)
             span = hi-lo or 1.0
+            # Build a trading-desk chart from real closes returned by the market feed.
             for gy in (400, 475, 550, 625, 700):
                 d.line((left, gy, right, gy), fill=(35, 49, 72), width=1)
             pts = []
@@ -99,10 +100,35 @@ def make_slide(title, body, idx, topic_title, path, chart_data=None, market_stat
                 x = left + int(i * (right-left) / (len(series)-1))
                 py = bottom - int((value-lo) / span * (bottom-top))
                 pts.append((x, py))
-            d.line(pts, fill=(70, 190, 225), width=6)
-            d.ellipse((pts[-1][0]-9, pts[-1][1]-9, pts[-1][0]+9, pts[-1][1]+9), fill=GOLD)
-            d.text((940, 720), f"Recent low: {fmt_chart_value(lo)}", font=font(22), fill=MUTED)
-            d.text((1380, 720), f"Recent high: {fmt_chart_value(hi)}", font=font(22), fill=MUTED)
+            # Price path with subtle glow, directional segments and a live-price marker.
+            for width, color in ((12, (19, 69, 91)), (6, (70, 190, 225))):
+                d.line(pts, fill=color, width=width, joint="curve")
+            d.ellipse((pts[-1][0]-13, pts[-1][1]-13, pts[-1][0]+13, pts[-1][1]+13), fill=GOLD)
+            d.line((pts[-1][0], pts[-1][1], right, pts[-1][1]), fill=GOLD, width=2)
+            d.rounded_rectangle((right-195, pts[-1][1]-22, right, pts[-1][1]+22), radius=8, fill=GOLD)
+            d.text((right-183, pts[-1][1]-14), fmt_chart_value(series[-1]), font=font(19, True), fill=(10, 16, 32))
+            # Recent range edges are observation zones, not guaranteed support/resistance.
+            recent = series[-24:] if len(series) >= 24 else series
+            rlo, rhi = min(recent), max(recent)
+            ylo = bottom - int((rlo-lo) / span * (bottom-top))
+            yhi = bottom - int((rhi-lo) / span * (bottom-top))
+            d.line((left, yhi, right, yhi), fill=(255, 190, 65), width=3)
+            d.line((left, ylo, right, ylo), fill=(255, 112, 112), width=3)
+            d.text((left+8, max(top, yhi-34)), "RANGE HIGH / WATCH", font=font(17, True), fill=(255, 204, 77))
+            d.text((left+8, min(bottom-28, ylo+8)), "RANGE LOW / WATCH", font=font(17, True), fill=(255, 130, 130))
+            # Draw a hand-annotated directional arrow from recent price action, like a creator marking a chart.
+            p0, p1 = pts[-min(10, len(pts))], pts[-1]
+            d.line((p0[0], p0[1], p1[0], p1[1]), fill=(245, 247, 250), width=3)
+            dx, dy = p1[0]-p0[0], p1[1]-p0[1]
+            import math
+            ang = math.atan2(dy, dx)
+            alen = 22
+            a1 = (int(p1[0]-alen*math.cos(ang-0.55)), int(p1[1]-alen*math.sin(ang-0.55)))
+            a2 = (int(p1[0]-alen*math.cos(ang+0.55)), int(p1[1]-alen*math.sin(ang+0.55)))
+            d.polygon([p1, a1, a2], fill=WHITE)
+            d.text((940, 720), f"Recent low: {fmt_chart_value(rlo)}", font=font(22), fill=MUTED)
+            d.text((1380, 720), f"Recent high: {fmt_chart_value(rhi)}", font=font(22), fill=MUTED)
+            d.text((940, 752), "SCENARIO MAP • WAIT FOR A CONFIRMED BREAK", font=font(18, True), fill=(115, 220, 158))
         else:
             d.text((960, 440), "LIVE PRICE DATA UNAVAILABLE", font=font(28, True), fill=GOLD)
             d.text((960, 500), "Verify data before trading", font=font(24), fill=MUTED)
